@@ -1,0 +1,252 @@
+#Dataset: CrowdSourced Mapping Dataset
+
+library(tree)
+library(rpart)
+library(rpart.plot)
+
+FilePath="C://Users//sayal//OneDrive//Desktop//Data Mining//DM Project//Crowdsourced Mapping//dataset.csv"
+CrowdSourceData=read.csv(FilePath, header=T, na.strings ="?")
+
+ColumnName <- c("class1",	"max_ndvi", "Jul_20_2015",	"Jun_02_2015",	"May_17_2015",	"May_01_2015"	,"Apr_15_2015","Mar_30_2015",	"Mar_14_2015",	"Feb_26_2015",	"Feb_10_2015",	"Jan_25_2015",	"Jan_09_2015",	"Nov_17_2014",	"Nov_01_2014",	"Oct_16_2014",	"Sep_30_2014", "Aug_13_2014", "Jun_26_2014", "Jun_10_2014","May_25_2014", "May_09_2014", "Apr_23_2014", "Apr_07_2014", "Mar_22_2014", "Feb_18_2014", "Feb_02_2014", "Jan_17_2014", "Jan_01_2014")
+names(CrowdSourceData) <- ColumnName
+
+summary(CrowdSourceData)
+CrowdSourceData=na.omit(CrowdSourceData)
+dim(CrowdSourceData)
+fix(CrowdSourceData)
+
+#Holdout Method
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+train=sample(1:nrow(CrowdSourceData), 5900)
+CrowdSourceData.train = CrowdSourceData[train,]
+CrowdSourceData.test = CrowdSourceData[-train,]
+dim(CrowdSourceData.train)
+dim(CrowdSourceData.test)
+
+#decision tree on train set
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+tree.CrowdSourceData=rpart(class1~., data=CrowdSourceData.train, method = 'class')
+rpart.plot(tree.CrowdSourceData)
+summary(tree.CrowdSourceData)
+
+
+#bagging
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+library(randomForest)
+tree.CrowdSourceData=randomForest(class1~.,CrowdSourceData.train, ntree=5,mtry=28)
+tree.pred=predict(tree.CrowdSourceData,CrowdSourceData.test,type="class")
+class1.test=CrowdSourceData$class1[-train]
+table(tree.pred,class1.test)
+mean(tree.pred!=class1.test)
+importance(tree.CrowdSourceData)
+varImpPlot(tree.CrowdSourceData, bg="green")
+plot(tree.CrowdSourceData)
+plot(tree.pred, col="orange") 
+
+
+sqrt(28)
+#Randomforest ntree=100, mtry=5
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+tree.CrowdSourceData=randomForest(class1~.,CrowdSourceData.train, ntree=100,mtry=5)
+tree.pred=predict(tree.CrowdSourceData,CrowdSourceData.test,type="class")
+table(tree.pred,class1.test)
+mean(tree.pred!=class1.test)
+plot(tree.CrowdSourceData)
+
+#Randomforest ntree=100, mtry=6
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+tree.CrowdSourceData=randomForest(class1~.,CrowdSourceData.train, ntree=100,mtry=6)
+tree.pred=predict(tree.CrowdSourceData,CrowdSourceData.test,type="class")
+table(tree.pred,class1.test)
+mean(tree.pred!=class1.test)
+plot(tree.CrowdSourceData)
+
+#Randomforest ntree=500, mtry=5
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+tree.CrowdSourceData=randomForest(class1~.,CrowdSourceData.train, ntree=500,mtry=5)
+tree.pred=predict(tree.CrowdSourceData,CrowdSourceData.test,type="class")
+table(tree.pred,class1.test)
+mean(tree.pred!=class1.test)
+plot(tree.CrowdSourceData)
+
+#Randomforest ntree=500, mtry=6
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+tree.CrowdSourceData=randomForest(class1~.,CrowdSourceData.train, ntree=500,mtry=6)
+tree.pred=predict(tree.CrowdSourceData,CrowdSourceData.test,type="class")
+table(tree.pred,class1.test)
+mean(tree.pred!=class1.test)
+plot(tree.CrowdSourceData)
+
+#Boosting
+library(gbm)
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+#Adding another column for boosting
+classtype=ifelse(CrowdSourceData$class1=="farm","No","Yes")
+CrowdSourceData=data.frame(CrowdSourceData,classtype)
+CrowdSourceData$classtype=ifelse(CrowdSourceData$classtype=="Yes",1,0)
+CrowdSourceData=CrowdSourceData[,-1]
+
+train=sample(1:nrow(CrowdSourceData), 5900)
+CrowdSourceData.train = CrowdSourceData[train,]
+CrowdSourceData.test = CrowdSourceData[-train,]
+classtype.test=CrowdSourceData$classtype[-train]
+dim(CrowdSourceData.train)
+dim(CrowdSourceData.test)
+
+tree.CrowdSourceData=gbm(classtype~., CrowdSourceData.train, distribution="bernoulli",n.trees=100)
+tree.pred=predict(tree.CrowdSourceData,CrowdSourceData.test, n.trees=100, type="response")
+mean(tree.pred!=classtype.test)
+plot(tree.CrowdSourceData)
+
+
+#Naive bayes
+CrowdSourceData=read.csv(FilePath, header=T, na.strings ="?")
+ColumnName <- c("class1",	"max_ndvi", "Jul_20_2015",	"Jun_02_2015",	"May_17_2015",	"May_01_2015"	,"Apr_15_2015","Mar_30_2015",	"Mar_14_2015",	"Feb_26_2015",	"Feb_10_2015",	"Jan_25_2015",	"Jan_09_2015",	"Nov_17_2014",	"Nov_01_2014",	"Oct_16_2014",	"Sep_30_2014", "Aug_13_2014", "Jun_26_2014", "Jun_10_2014","May_25_2014", "May_09_2014", "Apr_23_2014", "Apr_07_2014", "Mar_22_2014", "Feb_18_2014", "Feb_02_2014", "Jan_17_2014", "Jan_01_2014")
+names(CrowdSourceData) <- ColumnName
+CrowdSourceData=na.omit(CrowdSourceData)
+
+library(e1071)
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+
+Naive_Bayes_Model=naiveBayes(CrowdSourceData$class1~., CrowdSourceData)
+Naive_Bayes_Model
+NB_Predictions=predict(Naive_Bayes_Model,CrowdSourceData)
+table(NB_Predictions,CrowdSourceData$class1)
+mean(NB_Predictions!=CrowdSourceData$class1)
+
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+train=sample(1:nrow(CrowdSourceData),5900)
+trainSet=CrowdSourceData[train,]
+testSet=CrowdSourceData[-train,]
+
+class1.test=CrowdSourceData$class1[-train]
+NB_2=naiveBayes(class1~.,trainSet)
+NB_Predictions_2=predict(NB_2,testSet)
+table(NB_Predictions_2,class1.test)
+mean(NB_Predictions_2!=class1.test)
+
+
+
+#SVM Linear
+CrowdSourceData=read.csv(FilePath, header=T, na.strings ="?")
+ColumnName <- c("class1",	"max_ndvi", "Jul_20_2015",	"Jun_02_2015",	"May_17_2015",	"May_01_2015"	,"Apr_15_2015","Mar_30_2015",	"Mar_14_2015",	"Feb_26_2015",	"Feb_10_2015",	"Jan_25_2015",	"Jan_09_2015",	"Nov_17_2014",	"Nov_01_2014",	"Oct_16_2014",	"Sep_30_2014", "Aug_13_2014", "Jun_26_2014", "Jun_10_2014","May_25_2014", "May_09_2014", "Apr_23_2014", "Apr_07_2014", "Mar_22_2014", "Feb_18_2014", "Feb_02_2014", "Jan_17_2014", "Jan_01_2014")
+names(CrowdSourceData) <- ColumnName
+
+#svm
+library(e1071)
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+train=sample(1:nrow(CrowdSourceData),5900)
+trainSet=CrowdSourceData[train,]
+testSet=CrowdSourceData[-train,]
+dim(trainSet)
+dim(testSet)
+#SVM on train data linear cost =0.1
+svmfit=svm(class1~., data=trainSet, kernel="linear", cost=0.1, scale=TRUE)
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+#SVM on train data linear cost =0.01
+svmfit=svm(class1~., data=trainSet, kernel="linear", cost=0.01, scale=TRUE)
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+#SVM on train data linear cost = 1
+svmfit=svm(class1~., data=trainSet, kernel="linear", cost=1, scale=TRUE)
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+
+tune.out=tune(svm,class1~., data=trainSet, kernel="linear", ranges=list(cost=c(0.001,0.01,0.1,1,5,10,100)),scale=TRUE)
+summary(tune.out)
+#best model 
+bestmod=tune.out$best.model
+summary(bestmod)
+
+#SVM on test data  linear
+Class1_pred=predict(bestmod,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+
+#radial
+library(e1071)
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+svmfit=svm(class1~., data=trainSet, kernel="radial", gamma=1, cost=0.1)
+#SVM on test data  radial cost 0.1
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+svmfit=svm(class1~., data=trainSet, kernel="radial", gamma=1, cost=1)
+#SVM on test data  radial cost 1
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+svmfit=svm(class1~., data=trainSet, kernel="radial", gamma=1, cost=10)
+#SVM on test data  radial cost 10
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+tune.out=tune(svm, class1~., data=trainSet, kernel="radial",
+              ranges=list(cost=c(0.1,1,10,100,1000), gamma=c(0.5,1,2,3,4)))
+summary(tune.out)
+
+bestmod=tune.out$best.model
+summary(bestmod)
+
+#SVM on test data polynomial
+Class1_pred=predict(bestmod,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+
+#polynomial
+library(e1071)
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+svmfit=svm(class1~., data=trainSet, kernel="polynomial", degree=2,cost=0.01)
+#SVM on test data polynomial cost 0.01
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+svmfit=svm(class1~., data=trainSet, kernel="polynomial", degree=2,cost=0.1)
+#SVM on test data polynomial cost 0.1
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+svmfit=svm(class1~., data=trainSet, kernel="polynomial", degree=2,cost=1)
+#SVM on test data polynomial cost 1
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
+
+
+tune.out=tune(svm, class1~., data=trainSet, kernel="polynomial",
+              ranges=list(degree=c(0.1,0.5,1,1.5,2),ranges=list(cost=c(0.01,0.1,1,10,100))))
+
+summary(tune.out)
+bestmod=tune.out$best.model
+summary(bestmod)
+
+Class1_pred=predict(svmfit,testSet)
+table(Class1_pred,testSet$class1)
+mean(Class1_pred!=testSet$class1)
